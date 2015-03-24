@@ -5,10 +5,11 @@ var Promise = require('bluebird'),
     path = require('path'),
     _ = require('lodash'),
     program = require('commander'),
-    util = require('./util'),
+    utils = require('./utils'),
     logger = require('./logger').logger,
     git = require('gift'),  // bluebird doesn't work with this library
-    stashApiModule = require('stash-api'),
+    // stashApiModule = require('stash-api'),
+    stashApiModule = require('../../stash-api/src/app'), // for local development
     StashApi = stashApiModule.StashApi,
     PullRequest = stashApiModule.models.PullRequest,
     stash = new StashApi(process.env['STASH_CREVIEW_PROTOCOL'], 
@@ -45,7 +46,7 @@ if (hasError) {
 }
 
 // git repo root path => git rev-parse --show-toplevel
-util.getRepoRoot()
+utils.getRepoRoot()
 .then(function (repoPath) {
     logger.debug('got a repo root', {
         root: repoPath
@@ -106,14 +107,16 @@ util.getRepoRoot()
     var reviewers, sections, pr;
     // get reviewers
     sections = program.sections.split(',');
-    reviewers = util.getReviewers(repoConfig, program.sections.split(','));
-    if (!reviewers || reviewers.length < 1) {
-        throw new Error('No reviewers found for ' + program.sections);
-    }
-    
+    return [repoConfig, repoPath, currentBranch, defaultBranch, utils.getReviewers(stash, repoConfig, sections), sections];
+})
+.spread(function (repoConfig, repoPath, currentBranch, defaultBranch, reviewers, sections) {
     logger.debug('reviewers found: ', {
         reviewers: reviewers
     });
+    
+    if (!reviewers || reviewers.length < 1) {
+        throw new Error('No reviewers found for ' + program.sections);
+    }
     
     // create PR
     pr = new PullRequest();

@@ -59,3 +59,6 @@ cd path/to/repo
 cd even/deeper # it doesn't matter, where you are in the repo. We'll find the root for you :)
 creview -t TICK-1234 -m "Im making a pull request." -s UI # make a pull request that involves only UI code changes
 ```
+
+## Notes
+- this only supports up to 1000 users per group. We could add support for more, but I didn't feel like dealing with paging api's right now.

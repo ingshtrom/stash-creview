@@ -1,5 +1,6 @@
 var spawn = require('child_process').spawn,
     Promise = require('bluebird'),
+    async = Promise.promisifyAll(require('async')),
     logger = require('./logger').logger,
     _ = require('lodash');
 
@@ -33,7 +34,7 @@ function getRepoRoot () {
  * 
  * @param  {object}   repoConfig .creview-config from the repo root
  * @param  {[string]} sections   sections to select reviewers from
- * @return {[object]}            see below:
+ * @return {promise}             see below for promise return object:
  * [
  *   {
  *     "user": {
@@ -43,27 +44,46 @@ function getRepoRoot () {
  *   ...
  * ]
  */
-function getReviewers (repoConfig, sections) {
-    var result = [], 
-        badRun = false;
+function getReviewers (stash, repoConfig, sections) {
+    var promises = [];
 
     _.each(sections, function (secVal) {
-        var reviewers,
-            sec = _.find(repoConfig.sections, { key: secVal });
+        var sec = _.find(repoConfig.sections, { key: secVal }),
+            curPromise;
 
         // is it a valid section?
         if (!sec) {
             return false;
         }
 
-        reviewers = sec.reviewers;
+        curPromise = stash.getGroupMembers({
+            context: sec.groupSlug,
+            limit: 1000
+        })
+        .spread(function (response, body) {
+            var reviewers = body.values,
+                // http://stackoverflow.com/questions/4550505/getting-random-value-from-an-array
+                reviewer = reviewers[Math.floor(Math.random() * reviewers.length)];
 
-        // http://stackoverflow.com/questions/4550505/getting-random-value-from-an-array
-        result.push({
-            user: {
-                name: reviewers[Math.floor(Math.random() * reviewers.length)]
+            if (reviewer) {
+                return {
+                    user: {
+                        name: reviewer.slug
+                    }
+                };
             }
+            // yes, we don't want to return anything if the reviewer is not valid
+        })
+        .catch(function (err) {
+            logger.error('An error occurred while getting reviewers: ' + err);
+        })
+        promises.push(curPromise);
+    });
+
+    return Promise.all(promises)
+    .then(function (results) {
+        return _.filter(results, function (v) {
+            return v;
         });
     });
-    return result.length === 0 ? null : result;
 }
