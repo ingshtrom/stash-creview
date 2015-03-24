@@ -1,4 +1,4 @@
-module.exports.consoleLogLevel = 'silly'; // default to info
+module.exports.consoleLogLevel = 'info';
 module.exports.fileLogLevel = 'silly';
 module.exports.defaultLogFile = getUserHome() + '/creview.log';
 

@@ -1,8 +1,7 @@
 {
-  "name": "stash-pullrequest",
+  "name": "stash-creview",
   "version": "1.0.0",
-  "description": "CLI for creating pull requests in Atlassian Stash",
-  "main": "main/app.js",
+  "description": "CLI for creating pull requests with random reviewers in Atlassian Stash",
   "preferGlobal": "true",
   "bin": {
     "creview": "src/creview.js"
@@ -12,18 +11,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ingshtrom/stash-pullrequest.git"
+    "url": "https://github.com/ingshtrom/stash-creview.git"
   },
   "keywords": [
     "stash",
-    "git"
+    "git",
+    "atlassian",
+    "codereview",
+    "pullrequest"
   ],
   "author": "Alex \"Ingshtrom\" Hokanson <ingshtrom.developer@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ingshtrom/stash-pullrequest/issues"
+    "url": "https://github.com/ingshtrom/stash-creview/issues"
   },
-  "homepage": "https://github.com/ingshtrom/stash-pullrequest",
+  "homepage": "https://github.com/ingshtrom/stash-creview",
   "dependencies": {
     "bluebird": "^2.9.14",
     "commander": "^2.7.1",

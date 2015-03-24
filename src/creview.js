@@ -8,17 +8,22 @@ var Promise = require('bluebird'),
     util = require('./util'),
     logger = require('./logger').logger,
     git = require('gift'),  // bluebird doesn't work with this library
-    StashApi = require('../../stash-api/src/app').StashApi,
-    PullRequest = require('../../stash-api/src/app').models.PullRequest,
-    stash = new StashApi('http', 'localhost', '7990', process.env['STASH_USERNAME'], process.env['STASH_PASSWORD']);
+    stashApiModule = require('stash-api'),
+    StashApi = stashApiModule.StashApi,
+    PullRequest = stashApiModule.models.PullRequest,
+    stash = new StashApi(process.env['STASH_CREVIEW_PROTOCOL'], 
+                         process.env['STASH_CREVIEW_HOST'], 
+                         process.env['STASH_CREVIEW_PORT'], 
+                         process.env['STASH_CREVIEW_USERNAME'], 
+                         process.env['STASH_CREVIEW_PASSWORD']);
 var hasError = false;
 
 program
   .version('1.0.0')
-  .option('-t, --ticket [id]', 'id of the ticket this is for. e.g. creview -t NGEN-1234')
+  .option('-t, --ticket [id]', 'id of the ticket this is for. e.g. creview -t TICK-1234')
   .option('-m, --message [mes]', 'Message or title of the PR. e.g. creview -m "Fixing it all"')
-  .option('-s, --sections [secs]', 'Section of code. Options are [API, UI, QA]. e.g. creview -s UI,QA')
-  .option('-f, --force', 'Force the PR even if the current branch has uncommited changes.')
+  .option('-s, --sections [secs]', 'Section of code. Options are defined in your .creview-config file. e.g. creview -s UI,QA')
+  .option('-f, --force', 'Force the PR even if the current branch has uncommited changes. You probably don\'t want to do this.')
   .parse(process.argv);
 
 if (!program.ticket) {
@@ -36,7 +41,6 @@ if (!program.sections) {
 
 // don't continue if there is any error with the input
 if (hasError) {
-    logger.debug('Some of the input was invalid');
     return;
 }
 
@@ -51,8 +55,9 @@ util.getRepoRoot()
         repoPath
     ];
 })
+// verify our current status is clean!
 .spread(function (repoConfig, repoPath) {
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
         git(repoPath)
         .status(function (err, status) {
             var errorMessage = 'Your current branch is not clean. You can overide this message with the -f flag. Exiting now...'; 
@@ -60,27 +65,32 @@ util.getRepoRoot()
                 throw new Error('An error ocurred while getting the status of the repo.');
             }
             if (!status.clean && !program.force) {
-                logger.error(errorMessage);
-                throw new Error(errorMessage);
+                reject(errorMessage);
             }
-            resolve([repoConfig, repoPath, ]);
+            resolve([repoConfig, repoPath]);
         });
     });
 })
+// get the default branch
 .spread(function (repoConfig, repoPath) {
-    // respoConfig = JSON.parse(repoConfig, 'utf8')
     // branch that the current branch should request a pull from => config file at repo root, the default parent repo?
     // can override with CLI param
-    logger.debug('default branch', {
-        branch: repoConfig.defaultBranch
+    var defaultBranchPromise = stash.getDefaultBranch(repoConfig.projectKey, repoConfig.slug)
+    .spread(function (response, body) {
+        if (response.statusCode !== 200) {
+            logger.debug('getDefaultBranch', {
+                response: response
+            });
+            throw new Error('Error while getting the default branch');
+        }
+        logger.debug('default branch', {
+            branchJSON: body
+        });
+        return body;
     });
-    return [repoConfig, repoPath];
+    return [repoConfig, repoPath, defaultBranchPromise];
 })
-.spread(function (repoConfig, repoPath) {
-    // the list of possible reviewers => config file at repo root
-    return [repoConfig, repoPath];
-})
-.spread(function (repoConfig, repoPath) {
+.spread(function (repoConfig, repoPath, defaultBranch) {
     // current branch => https://www.npmjs.com/package/gift#repobranchbranch-callback
     return new Promise(function (resolve) {
         git(repoPath)
@@ -88,11 +98,11 @@ util.getRepoRoot()
             logger.debug('current branch', {
                 currentBranch: branch.name
             });
-            resolve([repoConfig, repoPath, branch]);
+            resolve([repoConfig, repoPath, branch, defaultBranch]);
         });
     });
 })
-.spread(function  (repoConfig, repoPath, currentBranch) {
+.spread(function  (repoConfig, repoPath, currentBranch, defaultBranch) {
     var reviewers, sections, pr;
     // get reviewers
     sections = program.sections.split(',');
@@ -118,8 +128,9 @@ util.getRepoRoot()
             }
         }
     };
+
     pr.toRef = {
-        id: 'refs/heads/' + repoConfig.defaultBranch,
+        id: defaultBranch.id,
         repository: {
             slug: repoConfig.slug,
             project: {
