@@ -63,7 +63,7 @@ function getReviewers (stash, repoConfig, sections) {
         .spread(function (response, body) {
             var reviewers = body.values,
                 // http://stackoverflow.com/questions/4550505/getting-random-value-from-an-array
-                reviewer = reviewers[Math.floor(Math.random() * reviewers.length)];
+                reviewer = reviewers[Math.floor(Math.random() * body.size)];
 
             if (reviewer) {
                 return {
