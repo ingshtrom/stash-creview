@@ -107,7 +107,7 @@ utils.getRepoRoot()
     var reviewers, sections, pr;
     // get reviewers
     sections = program.sections.split(',');
-    return [repoConfig, repoPath, currentBranch, defaultBranch, utils.getReviewers(stash, repoConfig, sections), sections];
+    return [repoConfig, repoPath, currentBranch, defaultBranch, utils.getReviewers(process.env['STASH_CREVIEW_USERNAME'], stash, repoConfig, sections), sections];
 })
 .spread(function (repoConfig, repoPath, currentBranch, defaultBranch, reviewers, sections) {
     logger.debug('reviewers found: ', {
