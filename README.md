@@ -26,26 +26,15 @@ You will also need to put a config file (`.creview-config`) in the root of every
             // so either bobby or billy can be used as reviewers for 
             // code that is in the 'API' section of the repo
             "key": "API",
-            "reviewers": [
-                // these are the Stash usernames, not display names
-                "billy",
-                "bobby"
-            ]
+            "groupSlug: "stash-group-slug-api"
         },
         {
             "key": "UI",
-            "reviewers": [
-                "ryan",
-                "lisa",
-                "ingshtrom"
-            ]
+            "groupSlug": "stash-group-slug-ui"
         },
         {
             "key": "QA",
-            "reviewers": [
-                "hey",
-                "roger"
-            ]
+            "groupSlug": "stash-group-slug-qa"
         }
     ],
     "projectKey": "FOOB",
