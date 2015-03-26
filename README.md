@@ -41,6 +41,7 @@ You will also need to put a config file (`.creview-config`) in the root of every
     "slug": "repo1" // repo slug. should be the same as the repo name.
 }
 ```
+For each "groupSlug" specified in the .creview-config file, you will need a Stash group by that name.  It should contain all of the users that could possibly perform a review for that type of pull request.
 
 ## Usage
 ```
