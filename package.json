@@ -1,6 +1,6 @@
 {
   "name": "stash-creview",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CLI for creating pull requests with random reviewers in Atlassian Stash",
   "preferGlobal": "true",
   "bin": {
@@ -33,7 +33,7 @@
     "gift": "^0.5.0",
     "lodash": "^3.5.0",
     "nodegit": "^0.3.3",
-    "stash-api": "^1.0.0",
+    "stash-api": "^1.0.1",
     "winston": "^0.9.0"
   }
 }

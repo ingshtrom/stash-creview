@@ -19,7 +19,7 @@ function getRepoRoot () {
         });
 
         git.stderr.on('data', function (data) {
-            logger.log('error', 'stderr when getting the root of your repository: ' + data);
+            logger.error('stderr when getting the root of your repository: ' + data);
         });
 
         git.on('close', function (code) {
@@ -68,24 +68,27 @@ function getReviewers (currentUser, stash, repoConfig, sections) {
                 reviewer = reviewers[Math.floor(Math.random() * body.size)],
                 count = 0;
 
+            if (!reviewers || body.size === 0) {
+                throw new Error('No reviewers found for the Stash group: ' + sec.groupSlug);
+            }
+
             // make sure the current user isn't a reviewer
             while (reviewer && reviewer.slug === currentUser && count < 50) {
-                console.log('had to try to get another user!');
                 reviewer = reviewers[Math.floor(Math.random() * body.size)];
                 count++;
             }
 
             // throw an error if we didn't find a reviewer
             if (count === 50) {
-                throw new Error('Could not find a reviewer that was not the current user for the section: ' + sec.groupSlug);
+                throw new Error('Could not find a reviewer that was not the current user for the group: ' + sec.groupSlug);
             }
 
+            logger.debug('selected reviewer', {
+                reviewer: reviewer.slug
+            });
+
             if (reviewer) {
-                return {
-                    user: {
-                        name: reviewer.slug
-                    }
-                };
+                return reviewer.slug;
             }
             // yes, we don't want to return anything if the reviewer is not valid
         })
@@ -97,8 +100,13 @@ function getReviewers (currentUser, stash, repoConfig, sections) {
 
     return Promise.all(promises)
     .then(function (results) {
-        return _.filter(results, function (v) {
-            return v;
-        });
+        var filteredResults = _.uniq(results);
+
+        logger.debug('end of getReviewers');
+
+        // we need to make sure we have a reviewer for each section
+        return filteredResults.length === sections.length ? 
+                _.map(filteredResults, function (v) { return { user: { name: v } } }) : 
+                getReviewers(currentUser, stash, repoConfig, sections);
     });
 }
