@@ -26,7 +26,7 @@ You will also need to put a config file (`.creview-config`) in the root of every
             // so either bobby or billy can be used as reviewers for 
             // code that is in the 'API' section of the repo
             "key": "API",
-            "groupSlug: "stash-group-slug-api"
+            "groupSlug": "stash-group-slug-api"
         },
         {
             "key": "UI",
