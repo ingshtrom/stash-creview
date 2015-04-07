@@ -47,7 +47,7 @@ function getRepoRoot () {
  *   ...
  * ]
  */
-function getReviewers (currentUser, stash, repoConfig, sections) {
+function getReviewers (currentUser, stash, repoConfig, sections, staticReviewers) {
     var promises = [],
         configSections = _.pluck(repoConfig.sections, 'key'),
         intersection = _.intersection(sections, configSections);
@@ -88,7 +88,11 @@ function getReviewers (currentUser, stash, repoConfig, sections) {
             }
 
             // make sure the current user isn't a reviewer
-            while (reviewer && reviewer.slug === currentUser && count < 50) {
+            // make sure none of the static reviewers are a random reviewer
+            while (reviewer &&
+                count < 50 &&
+                (reviewer.slug === currentUser || _.contains(staticReviewers, reviewer.slug))
+            ) {
                 reviewer = reviewers[Math.floor(Math.random() * body.size)];
                 count++;
             }
@@ -99,7 +103,9 @@ function getReviewers (currentUser, stash, repoConfig, sections) {
             }
 
             logger.debug('selected reviewer', {
-                reviewer: reviewer.slug
+                reviewer: reviewer.slug,
+                count: count,
+                staticReviewers: staticReviewers
             });
 
             if (reviewer) {

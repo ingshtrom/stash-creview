@@ -18,7 +18,8 @@ var Promise = require('bluebird'),
                          process.env['STASH_CREVIEW_PORT'], 
                          process.env['STASH_CREVIEW_USERNAME'], 
                          process.env['STASH_CREVIEW_PASSWORD']);
-var hasError = false;
+var hasError = false,
+    staticReviewers = (process.env['STASH_CREVIEW_STATIC_REVIEWERS'] || '').split(',');
 
 program
   .version('1.0.0')
@@ -26,6 +27,7 @@ program
   .option('-m, --message [mes]', 'Message or title of the PR. e.g. creview -m "Fixing it all"')
   .option('-s, --sections [secs]', 'Section of code. Options are defined in your .creview-config file. e.g. creview -s UI,QA')
   .option('-f, --force', 'Force the PR even if the current branch has uncommited changes. You probably don\'t want to do this.')
+  .option('-i, --ignore-static-reviewers', 'Ignore any static reviewers specified for this PR only.')
   .parse(process.argv);
 
 if (!program.ticket) {
@@ -38,6 +40,9 @@ if (!program.message) {
 }
 if (!program.sections) {
     program.sections = '';
+}
+if (program.ignoreStaticReviewers) {
+    staticReviewers = [];
 }
 
 // don't continue if there is any error with the input
@@ -107,7 +112,7 @@ utils.getRepoRoot()
     var sections;
     // get reviewers
     sections = program.sections.split(',');
-    return [repoConfig, repoPath, currentBranch, defaultBranch, utils.getReviewers(process.env['STASH_CREVIEW_USERNAME'], stash, repoConfig, sections), sections];
+    return [repoConfig, repoPath, currentBranch, defaultBranch, utils.getReviewers(process.env['STASH_CREVIEW_USERNAME'], stash, repoConfig, sections, staticReviewers), sections];
 })
 .spread(function (repoConfig, repoPath, currentBranch, defaultBranch, reviewers, sections) {
     var pr;
@@ -120,7 +125,16 @@ utils.getRepoRoot()
     } else if (reviewers && reviewers.length === 1 && reviewers[0] === '__nada__') {
         reviewers = [];
     }
-    
+
+    // add any static reviewers
+    _.each(staticReviewers, function (sr) {
+        reviewers.push({
+            user: {
+                name: sr
+            }
+        });
+    });
+
     // create PR
     pr = new PullRequest();
     pr.title = generateTitle(sections, program.ticket, program.message);
