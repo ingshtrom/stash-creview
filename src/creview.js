@@ -31,10 +31,6 @@ program
   .option('-i, --ignore-static-reviewers', 'Ignore any static reviewers specified for this PR only.')
   .parse(process.argv);
 
-if (!program.message) {
-    logger.error('A message must be supplied.');
-    hasError = true;
-}
 if (!program.sections) {
     program.sections = '';
 }
@@ -196,5 +192,5 @@ function generateTitle (sections, ticket, message) {
             result += '[' + val + ']';
         }
     });
-    return result + ' ' + ticket + ' - ' + message;
+    return result + ' ' + ticket + ' - ' + (message || '');
 }
