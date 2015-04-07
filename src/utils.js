@@ -1,6 +1,7 @@
+'use strict';
+
 var spawn = require('child_process').spawn,
     Promise = require('bluebird'),
-    async = Promise.promisifyAll(require('async')),
     logger = require('./logger').logger,
     _ = require('lodash');
 
@@ -10,7 +11,7 @@ module.exports.getReviewers = getReviewers;
 
 // MODULE IMPLEMENTATIONS
 function getRepoRoot () {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
         var git = spawn('git', ['rev-parse', '--show-toplevel']),
             output = '';
 
@@ -22,10 +23,10 @@ function getRepoRoot () {
             logger.error('stderr when getting the root of your repository: ' + data);
         });
 
-        git.on('close', function (code) {
+        git.on('close', function () {
             resolve(output.replace(/\s/g, ''));
         });
-    })
+    });
 }
 
 /**
@@ -47,7 +48,18 @@ function getRepoRoot () {
  * ]
  */
 function getReviewers (currentUser, stash, repoConfig, sections) {
-    var promises = [];
+    var promises = [],
+        configSections = _.keys(repoConfig.sections);
+
+    logger.debug('getReviewers', {
+        configSections: configSections,
+        sections: sections
+    });
+    // in case there are no sections or none of the sections are in the config,
+    // then we just return an empty array
+    if (_.intersection(sections, configSections).length === 0) {
+        return Promise.resolve(['__nada__']);
+    }
 
     _.each(sections, function (secVal) {
         var sec = _.find(repoConfig.sections, { key: secVal }),
@@ -102,11 +114,13 @@ function getReviewers (currentUser, stash, repoConfig, sections) {
     .then(function (results) {
         var filteredResults = _.uniq(results);
 
-        logger.debug('end of getReviewers');
+        logger.debug('end of getReviewers', {
+            filteredResults: filteredResults
+        });
 
         // we need to make sure we have a reviewer for each section
         return filteredResults.length === sections.length ? 
-                _.map(filteredResults, function (v) { return { user: { name: v } } }) : 
+                _.map(filteredResults, function (v) { return { user: { name: v } }; }) :
                 getReviewers(currentUser, stash, repoConfig, sections);
     });
 }

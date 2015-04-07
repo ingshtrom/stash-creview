@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 
 var Promise = require('bluebird'),
     fs = Promise.promisifyAll(require('fs')),
@@ -36,8 +37,7 @@ if (!program.message) {
     hasError = true;
 }
 if (!program.sections) {
-    logger.error('At least one section must be supplied.');
-    hasError = true;
+    program.sections = '';
 }
 
 // don't continue if there is any error with the input
@@ -104,18 +104,21 @@ utils.getRepoRoot()
     });
 })
 .spread(function  (repoConfig, repoPath, currentBranch, defaultBranch) {
-    var reviewers, sections, pr;
+    var sections;
     // get reviewers
     sections = program.sections.split(',');
     return [repoConfig, repoPath, currentBranch, defaultBranch, utils.getReviewers(process.env['STASH_CREVIEW_USERNAME'], stash, repoConfig, sections), sections];
 })
 .spread(function (repoConfig, repoPath, currentBranch, defaultBranch, reviewers, sections) {
+    var pr;
     logger.debug('reviewers found: ', {
         reviewers: reviewers
     });
     
     if (!reviewers || reviewers.length < 1) {
         throw new Error('No reviewers found for ' + program.sections);
+    } else if (reviewers && reviewers.length === 1 && reviewers[0] === '__nada__') {
+        reviewers = [];
     }
     
     // create PR
@@ -161,7 +164,9 @@ utils.getRepoRoot()
 function generateTitle (sections, ticket, message) {
     var result = '';
     _.each(sections, function (val) {
-        result += '[' + val + ']';
+        if (val) {
+            result += '[' + val + ']';
+        }
     });
     return result + ' ' + ticket + ' - ' + message;
 }
