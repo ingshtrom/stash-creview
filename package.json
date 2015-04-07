@@ -1,6 +1,6 @@
 {
   "name": "stash-creview",
-  "version": "1.0.4",
+  "version": "1.2.0",
   "description": "CLI for creating pull requests with random reviewers in Atlassian Stash",
   "preferGlobal": "true",
   "bin": {
