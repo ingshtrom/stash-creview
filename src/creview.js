@@ -30,10 +30,6 @@ program
   .option('-i, --ignore-static-reviewers', 'Ignore any static reviewers specified for this PR only.')
   .parse(process.argv);
 
-if (!program.ticket) {
-    logger.error('A ticket must be supplied.');
-    hasError = true;
-}
 if (!program.message) {
     logger.error('A message must be supplied.');
     hasError = true;
@@ -101,9 +97,23 @@ utils.getRepoRoot()
     return new Promise(function (resolve) {
         git(repoPath)
         .branch(function (err, branch) {
+            var match;
             logger.debug('current branch', {
                 currentBranch: branch.name
             });
+            // attempt to determine the ticket
+            // number based on the current branch name
+            if (!program.ticket) {
+                if (!repoConfig.parseBranchRegex) {
+                    throw new Error('No ticket number set and the parseBranchRegex was no defined in the .creview-config in your repo root.');
+                } else {
+                    match = branch.name.match(new RegExp(repoConfig.parseBranchRegex, 'i'));
+                    if (!match) {
+                        throw new Error('No ticket number set and could not infer the ticket based on the branch name and the parseBranchRegex value in the .creview-config.');
+                    }
+                    program.ticket = match[0];
+                }
+            }
             resolve([repoConfig, repoPath, branch, defaultBranch]);
         });
     });

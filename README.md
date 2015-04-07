@@ -21,11 +21,13 @@ export STASH_CREVIEW_STATIC_REVIEWERS=bob,bill # OPTIONAL
 You will also need to put a config file (`.creview-config`) in the root of every repo that this program will be used for.  Here is a sample one:
 ``` json
 {
-    // these denote 'sections' of your repo
+    /* these denote 'sections' of your repo */
     "sections": [
         {
-            // so either bobby or billy can be used as reviewers for 
-            // code that is in the 'API' section of the repo
+            /*
+             * so either bobby or billy can be used as reviewers for 
+             * code that is in the 'API' section of the repo
+             */
             "key": "API",
             "groupSlug": "stash-group-slug-api"
         },
@@ -38,8 +40,9 @@ You will also need to put a config file (`.creview-config`) in the root of every
             "groupSlug": "stash-group-slug-qa"
         }
     ],
+    "parseBranchRegex": "TICK-\d\d\d\d", /* regex to auto-determine the ticket number */
     "projectKey": "FOOB",
-    "slug": "repo1" // repo slug. should be the same as the repo name.
+    "slug": "repo1" /* repo slug. should be the same as the repo name */
 }
 ```
 For each "groupSlug" specified in the .creview-config file, you will need a Stash group by that name.  It should contain all of the users that could possibly perform a review for that type of pull request.
@@ -56,3 +59,4 @@ creview -t TICK-1234 -m "Im making a pull request." -s UI # make a pull request 
 - this only supports up to 1000 users per group. We could add support for more, but I didn't feel like dealing with paging api's right now.
 - the "-s" and "--sections" parameters are no longer required.
 - the `STASH_CREVIEW_STATIC_REVIEWERS` env var will limit your random reviewers. A static reviewer CANNOT be one of the randomly selected reviewers.
+- the parseBranchRegex .creview-config value will always be run in a case-insensitive context, and only return the first match 
