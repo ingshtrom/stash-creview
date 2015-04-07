@@ -6,6 +6,7 @@ var Promise = require('bluebird'),
     path = require('path'),
     _ = require('lodash'),
     program = require('commander'),
+    open = require('open'),
     utils = require('./utils'),
     logger = require('./logger').logger,
     git = require('gift'),  // bluebird doesn't work with this library
@@ -171,8 +172,11 @@ utils.getRepoRoot()
     stash.createPullRequest(repoConfig.projectKey, repoConfig.slug, pr)
     .spread(function (response, body) {
         if (response.statusCode === 201) {
-            logger.info('successfully created pull request');
+            logger.info('successfully created pull request', {
+                body: body
+            });
             // open chrome on the user's machine to the PR url
+            open(body.links.self[0].href);
         } else {
             logger.error('boooooo, error while creating pull request', {
                 body: body,
