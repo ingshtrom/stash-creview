@@ -49,19 +49,22 @@ function getRepoRoot () {
  */
 function getReviewers (currentUser, stash, repoConfig, sections) {
     var promises = [],
-        configSections = _.keys(repoConfig.sections);
+        configSections = _.pluck(repoConfig.sections, 'key'),
+        intersection = _.intersection(sections, configSections);
 
     logger.debug('getReviewers', {
         configSections: configSections,
-        sections: sections
+        sections: sections,
+        intersection: intersection
     });
     // in case there are no sections or none of the sections are in the config,
     // then we just return an empty array
-    if (_.intersection(sections, configSections).length === 0) {
+    if (intersection.length === 0) {
+        logger.debug('there no sections configured. No reviewers are found.');
         return Promise.resolve(['__nada__']);
     }
 
-    _.each(sections, function (secVal) {
+    _.each(intersection, function (secVal) {
         var sec = _.find(repoConfig.sections, { key: secVal }),
             curPromise;
 
@@ -119,7 +122,7 @@ function getReviewers (currentUser, stash, repoConfig, sections) {
         });
 
         // we need to make sure we have a reviewer for each section
-        return filteredResults.length === sections.length ? 
+        return filteredResults.length === intersection.length ?
                 _.map(filteredResults, function (v) { return { user: { name: v } }; }) :
                 getReviewers(currentUser, stash, repoConfig, sections);
     });

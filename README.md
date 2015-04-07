@@ -52,3 +52,4 @@ creview -t TICK-1234 -m "Im making a pull request." -s UI # make a pull request 
 
 ## Notes
 - this only supports up to 1000 users per group. We could add support for more, but I didn't feel like dealing with paging api's right now.
+- the "-s" and "--sections" parameters are no longer required.
