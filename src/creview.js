@@ -135,11 +135,13 @@ utils.getRepoRoot()
 
     // add any static reviewers
     _.each(staticReviewers, function (sr) {
-        reviewers.push({
-            user: {
-                name: sr
-            }
-        });
+        if (sr) {
+            reviewers.push({
+                user: {
+                    name: sr
+                }
+            });
+        }
     });
 
     // create PR
